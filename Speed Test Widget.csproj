@@ -1,0 +1,59 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <OutputType>WinExe</OutputType>
+    <TargetFramework>net8.0-windows</TargetFramework>
+	
+	<!-- make the assembly name deterministic even if project filename has spaces -->
+    <AssemblyName>SpeedTestWidget</AssemblyName>
+	
+	<!-- Version, you can override on the command line -->
+    <Version>1.0.0</Version>
+    <AssemblyVersion>1.0.0.0</AssemblyVersion>
+    <FileVersion>1.0.0.0</FileVersion>
+	
+    <RootNamespace>SpeedTestWidget</RootNamespace>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <UseWPF>true</UseWPF>
+
+    <!-- Publishing settings -->
+    <PublishSingleFile>true</PublishSingleFile>
+    <SelfContained>true</SelfContained>
+    <PublishReadyToRun>false</PublishReadyToRun>
+    <EnableCompressionInSingleFile>true</EnableCompressionInSingleFile>
+	<IncludeAllContentForSelfExtract>true</IncludeAllContentForSelfExtract>
+	
+	<DebugType>none</DebugType>
+	<DebugSymbols>false</DebugSymbols>
+
+    <!-- Runtime -->
+    <RuntimeIdentifiers>win-x86;win-x64</RuntimeIdentifiers>
+
+    <!-- App metadata -->
+    <ApplicationIcon>Assets\app.ico</ApplicationIcon>
+    <PlatformTarget>AnyCPU</PlatformTarget>
+    <PackageIcon>appicon.png</PackageIcon>
+  </PropertyGroup>
+  <ItemGroup>
+    <PackageReference Include="DocumentFormat.OpenXml" Version="3.3.0" />
+    <PackageReference Include="Microsoft.EntityFrameworkCore.Sqlite" Version="9.0.9" />
+    <PackageReference Include="Microsoft.EntityFrameworkCore.Tools" Version="9.0.9">
+      <PrivateAssets>all</PrivateAssets>
+      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+    </PackageReference>
+    <PackageReference Include="Newtonsoft.Json" Version="13.0.4" />
+    <PackageReference Include="System.Data.SQLite.Core" Version="1.0.119" />
+
+    <!-- removed the old System.* packages -->
+    <Resource Include="Assets\switch.png" />
+    <Resource Include="Assets\app.ico" />
+	<Resource Include="Skins\*.xaml" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Update="Assets\appicon.png">
+      <Pack>True</Pack>
+      <PackagePath>\</PackagePath>
+    </None>
+  </ItemGroup>
+</Project>

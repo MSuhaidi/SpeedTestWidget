@@ -1,0 +1,187 @@
+﻿<Window x:Class="Speed_Test.WidgetWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="Speed Test Widget"
+        Height="180" Width="200"
+        ResizeMode="NoResize" 
+        WindowStartupLocation="Manual"
+        WindowStyle="None"
+        AllowsTransparency="True"
+        Background="Transparent"
+        Foreground="White"
+        Icon="/Assets/app.ico"
+        Topmost="True"
+        MouseLeftButtonDown="Window_MouseLeftButtonDown">
+
+    <Border Background="{DynamicResource WidgetBackground}" 
+            BorderBrush="{DynamicResource WidgetBorder}" 
+            BorderThickness="2" 
+            CornerRadius="10" 
+            Padding="10">
+        <Grid>
+            <Grid.RowDefinitions>
+                <RowDefinition Height="Auto"/>
+                <RowDefinition Height="Auto"/>
+                <RowDefinition Height="Auto"/>
+                <RowDefinition Height="*"/>
+                <RowDefinition Height="Auto"/>
+                <RowDefinition Height="Auto"/>
+            </Grid.RowDefinitions>
+
+            <!-- Title with Close Button -->
+            <Grid Grid.Row="0" Margin="0,0,0,5">
+                <TextBlock Text="Speed Test"
+                           FontSize="14" 
+                           FontWeight="Bold" 
+                           FontFamily="Segoe UI"
+                           Foreground="{DynamicResource TitleBrush}"
+                           HorizontalAlignment="Left" 
+                           VerticalAlignment="Center"/>
+
+                <Button Width="16" Height="16" 
+                        HorizontalAlignment="Right" 
+                        VerticalAlignment="Top" 
+                        Background="Transparent"
+                        BorderThickness="0"
+                        Click="CloseButton_Click"
+                        Cursor="Hand">
+                    <TextBlock Text="✕" 
+                               Foreground="{DynamicResource TitleBrush}" 
+                               FontSize="12" 
+                               VerticalAlignment="Center" 
+                               HorizontalAlignment="Center"/>
+                </Button>
+            </Grid>
+
+            <!-- Download Speed -->
+            <StackPanel Grid.Row="1" Margin="0,3,0,3">
+                <TextBlock Text="↓ Download" 
+                           Foreground="{DynamicResource SubtextBrush}" 
+                           FontSize="11" 
+                           Margin="0,0,0,2"/>
+                <TextBlock x:Name="DownloadText" 
+                           Text="-- Mbps"
+                           Foreground="{DynamicResource DownloadBrush}" 
+                           FontSize="15" 
+                           FontWeight="Bold"/>
+            </StackPanel>
+
+            <!-- Upload Speed -->
+            <StackPanel Grid.Row="2" Margin="0,3,0,3">
+                <TextBlock Text="↑ Upload" 
+                           Foreground="{DynamicResource SubtextBrush}" 
+                           FontSize="11" 
+                           Margin="0,0,0,2"/>
+                <TextBlock x:Name="UploadText" 
+                           Text="-- Mbps"
+                           Foreground="{DynamicResource UploadBrush}" 
+                           FontSize="15" 
+                           FontWeight="Bold"/>
+            </StackPanel>
+
+            <!-- Time Since Last Test & Tamper Warning -->
+            <StackPanel Grid.Row="3" Margin="0,5,0,5" VerticalAlignment="Center">
+                <TextBlock x:Name="TimeSinceText" 
+                           Text="No tests yet"
+                           Foreground="{DynamicResource SubtextBrush}" 
+                           FontSize="11" 
+                           FontStyle="Italic"
+                           HorizontalAlignment="Center"
+                           TextWrapping="Wrap"/>
+
+                <TextBlock x:Name="TamperWarning" 
+                           Text="⚠ Data Tampered!" 
+                           FontSize="10" 
+                           Foreground="Red" 
+                           FontWeight="Bold"
+                           HorizontalAlignment="Center" 
+                           Margin="0,3,0,0"
+                           Visibility="Collapsed"/>
+            </StackPanel>
+
+            <!-- Run Test Button -->
+            <Button x:Name="StartTestButton" 
+                    Grid.Row="4"
+                    Content="Run Test"
+                    Height="28"
+                    FontWeight="SemiBold"
+                    FontSize="12"
+                    Margin="0,3,0,3"
+                    Click="StartTestButton_Click"
+                    Background="#0078D4"
+                    Foreground="White"
+                    BorderThickness="0"
+                    Cursor="Hand">
+                <Button.Style>
+                    <Style TargetType="Button">
+                        <Setter Property="Template">
+                            <Setter.Value>
+                                <ControlTemplate TargetType="Button">
+                                    <Border Background="{TemplateBinding Background}"
+                                            CornerRadius="4"
+                                            Padding="8,5">
+                                        <ContentPresenter HorizontalAlignment="Center" 
+                                                        VerticalAlignment="Center"/>
+                                    </Border>
+                                </ControlTemplate>
+                            </Setter.Value>
+                        </Setter>
+                        <Style.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter Property="Background" Value="#106EBE"/>
+                            </Trigger>
+                            <Trigger Property="IsEnabled" Value="False">
+                                <Setter Property="Background" Value="#555555"/>
+                                <Setter Property="Foreground" Value="#999999"/>
+                            </Trigger>
+                        </Style.Triggers>
+                    </Style>
+                </Button.Style>
+            </Button>
+
+            <!-- Footer with Version -->
+            <StackPanel Grid.Row="5" Orientation="Horizontal" HorizontalAlignment="Center" Margin="0,2,0,0">
+                <TextBlock x:Name="AppVersionText"
+                           FontSize="9"
+                           Foreground="{DynamicResource SubtextBrush}"
+                           Margin="0,0,3,0">
+                    <Hyperlink x:Name="AppVersionLink"
+                               NavigateUri="https://github.com/MSuhaidi/Speed/"
+                               RequestNavigate="Hyperlink_RequestNavigate"
+                               Foreground="{DynamicResource SubtextBrush}">
+                    </Hyperlink>
+                </TextBlock>
+
+                <TextBlock Text="|" 
+                           FontSize="9" 
+                           Foreground="{DynamicResource SubtextBrush}"/>
+                <TextBlock FontSize="9" 
+                           Foreground="{DynamicResource SubtextBrush}"
+                           Margin="3,0,0,0">
+                    <Hyperlink NavigateUri="https://www.measurementlab.net/"
+                               RequestNavigate="Hyperlink_RequestNavigate"
+                               Foreground="{DynamicResource SubtextBrush}">
+                        M-Lab
+                    </Hyperlink>
+                </TextBlock>
+            </StackPanel>
+
+            <!-- Context Menu for Settings -->
+            <Grid.ContextMenu>
+                <ContextMenu>
+                    <MenuItem Header="Run Speed Test" Click="StartTestButton_Click" FontWeight="Bold"/>
+                    <Separator/>
+                    <MenuItem Header="Skin">
+                        <MenuItem Header="Default" Click="DefaultSkin_Click" IsCheckable="True" x:Name="DefaultSkinMenuItem" IsChecked="True"/>
+                        <MenuItem Header="Dark" Click="DarkSkin_Click" IsCheckable="True" x:Name="DarkSkinMenuItem"/>
+                        <MenuItem Header="Light" Click="LightSkin_Click" IsCheckable="True" x:Name="LightSkinMenuItem"/>
+                        <MenuItem Header="Neon" Click="NeonSkin_Click" IsCheckable="True" x:Name="NeonSkinMenuItem"/>
+                    </MenuItem>
+                    <Separator/>
+                    <MenuItem Header="Clear Data" Click="ClearData_Click"/>
+                    <MenuItem Header="Exit" Click="CloseButton_Click"/>
+                </ContextMenu>
+            </Grid.ContextMenu>
+        </Grid>
+    </Border>
+</Window>
