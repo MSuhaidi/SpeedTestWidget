@@ -1,6 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Data.SQLite;
+﻿using Microsoft.Data.Sqlite;
 using System.IO;
 
 namespace SpeedTestWidget
@@ -25,7 +23,7 @@ namespace SpeedTestWidget
 
             if (!File.Exists(DbPath))
             {
-                using var conn = new SQLiteConnection($"Data Source={DbPath}");
+                using var conn = new SqliteConnection($"Data Source={DbPath}");
                 conn.Open();
 
                 using var cmd = conn.CreateCommand();
@@ -49,7 +47,7 @@ namespace SpeedTestWidget
         {
             try
             {
-                using var conn = new SQLiteConnection($"Data Source={DbPath}");
+                using var conn = new SqliteConnection($"Data Source={DbPath}");
                 conn.Open();
 
                 using var cmd = conn.CreateCommand();
@@ -79,7 +77,7 @@ namespace SpeedTestWidget
 
             try
             {
-                using var conn = new SQLiteConnection($"Data Source={DbPath}");
+                using var conn = new SqliteConnection($"Data Source={DbPath}");
                 conn.Open();
 
                 using var cmd = conn.CreateCommand();
@@ -116,7 +114,7 @@ namespace SpeedTestWidget
         {
             try
             {
-                using var conn = new SQLiteConnection($"Data Source={DbPath}");
+                using var conn = new SqliteConnection($"Data Source={DbPath}");
                 conn.Open();
 
                 using var cmd = conn.CreateCommand();
@@ -150,7 +148,7 @@ namespace SpeedTestWidget
 
         public static void ClearHistory()
         {
-            using var conn = new SQLiteConnection($"Data Source={DbPath}");
+            using var conn = new SqliteConnection($"Data Source={DbPath}");
             conn.Open();
 
             using var cmd = conn.CreateCommand();
@@ -160,7 +158,7 @@ namespace SpeedTestWidget
 
         public static int GetResultCount()
         {
-            using var conn = new SQLiteConnection($"Data Source={DbPath}");
+            using var conn = new SqliteConnection($"Data Source={DbPath}");
             conn.Open();
 
             using var cmd = conn.CreateCommand();

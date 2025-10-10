@@ -9,7 +9,7 @@
         AllowsTransparency="True"
         Background="Transparent"
         Foreground="White"
-        Icon="/Assets/app.ico"
+        Icon="/Assets/App/app.ico"
         Topmost="True"
         MouseLeftButtonDown="Window_MouseLeftButtonDown">
 

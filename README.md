@@ -19,6 +19,7 @@ A lightweight desktop widget that runs speed tests (download/upload) using the *
 
 ### Prerequisites  
 - Windows OS 
+- .NET 8.0 Runtime
 
 ### Installation  
 1. Clone this repository  
@@ -27,7 +28,8 @@ A lightweight desktop widget that runs speed tests (download/upload) using the *
 
 ### Configuration  
 - You can configure the ndt7 server endpoint in `Ndt7Client.cs`  
-- (Optional) Adjust widget appearance via the XAML / UI files  
+- (Optional) Adjust widget appearance via the Skins files  
+- (Optional) Bundle .NET runtime for easier distribution. --> See SpeedTestWidget.csproj for example.
 
 ---
 
