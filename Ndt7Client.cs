@@ -1,7 +1,5 @@
-﻿using System;
-using System.Net.Http;
+﻿using System.Net.Http;
 using System.Text.Json;
-using System.Threading.Tasks;
 using System.Windows.Controls;
 
 namespace SpeedTestWidget
@@ -29,7 +27,7 @@ namespace SpeedTestWidget
                 if (results.GetArrayLength() == 0)
                     throw new InvalidOperationException("No NDT7 servers available in your region. Please try again later.");
 
-                var firstServer = results[0];
+                var firstServer = results[0]; // Use the first server in the list. Can change the index to try others.
 
                 return new ServerInfo
                 {
