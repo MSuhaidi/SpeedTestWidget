@@ -1,5 +1,6 @@
 # SpeedTestWidget  
 
+[![GitHub Sponsors](https://img.shields.io/github/sponsors/MSuhaidi?style=flat-square&logo=githubsponsors&color=ff69b4)](https://github.com/sponsors/MSuhaidi)
 [![Donate via PayPal](https://img.shields.io/badge/Donate-PayPal-blue?style=flat-square&logo=paypal)](https://paypal.me/MSuhaidiM)  
 
 A lightweight desktop widget that runs speed tests (download/upload) using the **ndt7** protocol.  
@@ -8,59 +9,58 @@ A lightweight desktop widget that runs speed tests (download/upload) using the *
 
 ## 🚀 Features
 
-- Real-time network speed measurement (download + upload)  
-- Uses **ndt7** server for accurate results  
-- Minimal UI — always visible in a small window  
-- Easy to integrate / embed into your workflow  
+- Real-time measurement of download and upload speeds  
+- Uses official **ndt7** servers for accurate benchmarking  
+- Clean, minimal, always-on-top interface  
+- Lightweight and resource-efficient  
+- Optional data logging for performance analysis 
 
 ---
 
 ## 🛠️ Getting Started
 
 ### Prerequisites  
-- Windows OS 
-- .NET 8.0 Runtime
+- **Windows OS**
+- **.NET 8.0 Runtime**
 
 ### Installation  
 1. Clone this repository  
-2. Build using Visual Studio or via CLI (`dotnet build`)  
-3. Run the executable — a widget window will appear showing the speed results  
+2. Build using **Visual Studio** or run `dotnet build`  
+3. Run the compiled executable — the widget will start and perform a speed test automatically  
 
 ### Configuration  
-- You can configure the ndt7 server endpoint in `Ndt7Client.cs`  
-- (Optional) Adjust widget appearance via the Skins files  
-- (Optional) Bundle .NET runtime for easier distribution. --> See SpeedTestWidget.csproj for example.
+- Configure the ndt7 server endpoint in `Ndt7Client.cs`  
+- (Optional) Customize the interface through **Skins**  
+- (Optional) Bundle the .NET runtime for standalone distribution (see `SpeedTestWidget.csproj` for an example)
 
 ---
 
 ## 📂 Project Structure
 
-| Folder / File                  | Purpose |
-|-------------------------------|---------|
-| `WidgetWindow.xaml` / `.cs`   | UI layout & window logic |
-| `Ndt7Client.*`                 | Core logic for communicating with ndt7 servers |
-| `DatabaseHelper.cs`           | Local storage / logging (if enabled) |
-| `JsonMessageLogger.cs`         | Logging of JSON data from ndt7 servers|
-| `SecureStorage.cs`              | Encrypted result storage |
-| `.gitignore`, `LICENSE`, etc.  | Standard project files |
+| File / Folder                | Description |
+|------------------------------|-------------|
+| `WidgetWindow.xaml` / `.cs`  | UI layout and widget logic |
+| `Ndt7Client.*`               | Handles ndt7 communication |
+| `DatabaseHelper.cs`          | Local storage and history logging |
+| `JsonMessageLogger.cs`       | JSON-based logging of ndt7 test results |
+| `SecureStorage.cs`           | Secure storage for sensitive configuration |
+| `.gitignore`, `LICENSE`, etc.| Supporting project files |
 
 ---
 
 ## 🧪 Usage Example
 
-- Download the exe file from release page and run on your computer.
+- Download the `.exe` file from the [Releases](../../releases) page.  
+- Run it directly on your computer — the widget will appear automatically.
 
 ---
 
-## 📜 License
+## 🧭 Version History
 
-This project is licensed under the **MIT License** — see [LICENSE](LICENSE) for details.
-
----
-
-## 🙏 Support / Donations
-
-If you find this useful and want to support continued development, you can donate via PayPal: [paypal.me/MSuhaidiM](https://paypal.me/MSuhaidiM)
+| Version | Release Date | Highlights |
+|--------|--------------|------------|
+| **1.0.1** | 2025-10-16 | • Code cleanup <br> • Removed bundled runtime |
+| **1.0.0** | 2025-10-16 | • Initial stable release |
 
 ---
 
@@ -71,3 +71,22 @@ If you find this useful and want to support continued development, you can donat
 - More configurable UI themes / skins  
 - Exporting test logs (CSV, charting)  
 - Support for other speed test protocols
+
+---
+
+## 📜 License
+
+This project is licensed under the **MIT License** — see [LICENSE](LICENSE) for details.
+
+---
+
+## 🙏 Support & Sponsorship
+
+If this project helps you, please consider supporting development:
+
+- 💸 [Donate via PayPal](https://paypal.me/MSuhaidiM)  
+- 🌟 [Sponsor on GitHub](https://github.com/sponsors/MSuhaidi)
+
+---
+
+**Repository:** [github.com/MSuhaidi/SpeedTestWidget](https://github.com/MSuhaidi/SpeedTestWidget)
