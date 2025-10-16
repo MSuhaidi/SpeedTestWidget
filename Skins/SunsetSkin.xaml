@@ -1,0 +1,14 @@
+﻿<ResourceDictionary xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+                    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+
+    <!-- Sunset Theme - Warm Orange & Pink -->
+    <SolidColorBrush x:Key="WidgetBackground" Color="#2C1810"/>
+    <SolidColorBrush x:Key="WidgetBorder" Color="#FF6B35"/>
+    <SolidColorBrush x:Key="TitleBrush" Color="#FFE5D9"/>
+    <SolidColorBrush x:Key="ValueBrush" Color="#FFEAA7"/>
+    <SolidColorBrush x:Key="SubtextBrush" Color="#FDCB6E"/>
+    <SolidColorBrush x:Key="DownloadBrush" Color="#FF7675"/>
+    <SolidColorBrush x:Key="UploadBrush" Color="#FD79A8"/>
+    <SolidColorBrush x:Key="PingBrush" Color="#FDCB6E"/>
+
+</ResourceDictionary>

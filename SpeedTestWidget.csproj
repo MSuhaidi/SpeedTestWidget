@@ -4,7 +4,7 @@
     <TargetFramework>net8.0-windows</TargetFramework>
 
 	<AssemblyName>SpeedTestWidget</AssemblyName>
-	<Version>1.0.1</Version>
+	<Version>1.1.0</Version>
 	
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
@@ -14,11 +14,12 @@
     <PublishSingleFile>true</PublishSingleFile>
 	<SelfContained>false</SelfContained> <!-- Set to true to include .NET runtime -->
     <PublishReadyToRun>true</PublishReadyToRun>
-	<RuntimeIdentifier>win-x64</RuntimeIdentifier>
+	  <RuntimeIdentifier>win-x64</RuntimeIdentifier> <!-- Set to win-x86 for x32 base system -->
 	  <!-- This line can be uncommented to enable compression when SelfContained set to true -->
 	  <!-- EnableCompressionInSingleFile>true</EnableCompressionInSingleFile -->
 	<IncludeNativeLibrariesForSelfExtract>true</IncludeNativeLibrariesForSelfExtract>
-	<IncludeAllContentForSelfExtract>false</IncludeAllContentForSelfExtract>
+	  <!-- This line can be uncommented to include all content files for self-extraction -->
+	  <!-- IncludeAllContentForSelfExtract>false</IncludeAllContentForSelfExtract -->
 	<IlcOptimizationPreference>Size</IlcOptimizationPreference>
 	
 	<DebugType>none</DebugType>
@@ -32,8 +33,9 @@
   </PropertyGroup>
   <ItemGroup>
 	<PackageReference Include="Microsoft.Data.Sqlite" Version="9.0.9" />
-
+	<None Include="Skins\*.xaml">
+		<CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+	</None>
     <Resource Include="Assets\App\app.ico" />
-	<Resource Include="Skins\*.xaml" />
   </ItemGroup>
 </Project>

@@ -1,4 +1,5 @@
 ﻿using System.IO;
+using System.Windows;
 
 namespace SpeedTestWidget
 {
@@ -29,7 +30,7 @@ namespace SpeedTestWidget
             }
             catch (Exception ex)
             {
-                System.Diagnostics.Debug.WriteLine($"Failed to initialize JSON logger: {ex.Message}");
+                MessageBox.Show($"Failed to initialize JSON logger: {ex.Message}");
             }
         }
 
@@ -41,7 +42,7 @@ namespace SpeedTestWidget
             }
             catch (Exception ex)
             {
-                System.Diagnostics.Debug.WriteLine($"Failed to log download message: {ex.Message}");
+                MessageBox.Show($"Failed to log download message: {ex.Message}");
             }
         }
 
@@ -53,7 +54,7 @@ namespace SpeedTestWidget
             }
             catch (Exception ex)
             {
-                System.Diagnostics.Debug.WriteLine($"Failed to log upload message: {ex.Message}");
+                MessageBox.Show($"Failed to log upload message: {ex.Message}");
             }
         }
 
@@ -67,7 +68,7 @@ namespace SpeedTestWidget
             }
             catch (Exception ex)
             {
-                System.Diagnostics.Debug.WriteLine($"Failed to close JSON logger: {ex.Message}");
+                MessageBox.Show($"Failed to close JSON logger: {ex.Message}");
             }
         }
     }

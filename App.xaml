@@ -4,10 +4,7 @@
              StartupUri="WidgetWindow.xaml">
     <Application.Resources>
         <ResourceDictionary>
-            <ResourceDictionary.MergedDictionaries>
-                <!-- Default skin loaded at startup -->
-                <ResourceDictionary Source="Skins/DefaultSkin.xaml"/>
-            </ResourceDictionary.MergedDictionaries>
+            
         </ResourceDictionary>
     </Application.Resources>
 </Application>
