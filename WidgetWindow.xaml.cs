@@ -1,5 +1,6 @@
-﻿using SpeedTestWidget;
-using System.Diagnostics;
+﻿using System.Diagnostics;
+using System.IO;
+using System.Reflection;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
@@ -7,15 +8,13 @@ using System.Windows.Media.Animation;
 using System.Windows.Navigation;
 using System.Windows.Threading;
 
-namespace Speed_Test
+namespace SpeedTestWidget
 {
     public partial class WidgetWindow : Window
     {
-        // Create hidden progress bars for the NDT client
-        private readonly ProgressBar _downloadProgress;
-        private readonly ProgressBar _uploadProgress;
         private readonly SecureStorage _secureStorage;
         private DispatcherTimer? _timer;
+        private List<SkinInfo> _availableSkins = [];
 
         public WidgetWindow()
         {
@@ -26,12 +25,17 @@ namespace Speed_Test
             var fadeIn = new DoubleAnimation(0, 1, new Duration(TimeSpan.FromMilliseconds(300)));
             this.BeginAnimation(Window.OpacityProperty, fadeIn);
 
-            // Initialize hidden progress bars (not displayed, just for NDT client)
-            _downloadProgress = new ProgressBar { Minimum = 0, Maximum = 100 };
-            _uploadProgress = new ProgressBar { Minimum = 0, Maximum = 100 };
+            // Ensure database is initialized
+            DatabaseHelper.InitDatabase();
 
             // Initialize secure storage
             _secureStorage = new SecureStorage();
+
+            // Copy default skins to AppData on first run (so users can edit them)
+            SkinManager.CopyDefaultSkinsToAppData();
+
+            // Initialize JSON logger (optional, for debugging)
+            // JsonMessageLogger.Initialize();
 
             // Load last test result from secure storage
             LoadLastResult();
@@ -44,6 +48,9 @@ namespace Speed_Test
 
             // Apply saved skin (default to "Default")
             ApplySkin(LoadSavedSkin());
+
+            // Populate Skin Menu
+            RefreshSkins();
         }
 
         private void LoadLastResult()
@@ -53,11 +60,12 @@ namespace Speed_Test
 
             if (secureResult != null)
             {
-                DownloadText.Text = $"{secureResult.DownloadMbps:F1} Mbps";
-                UploadText.Text = $"{secureResult.UploadMbps:F1} Mbps";
+                DownloadText.Text = $"{secureResult.DownloadMbps:F2} Mbps";
+                UploadText.Text = $"{secureResult.UploadMbps:F2} Mbps";
+                DownloadPingText.Text = $"{secureResult.DownloadPingMs:F0} ms";
+                UploadPingText.Text = $"{secureResult.UploadPingMs:F0} ms";
                 UpdateTimeSince(secureResult.Timestamp);
 
-                // Show tamper warning if data was modified
                 TamperWarning.Visibility = secureResult.IsValid ? Visibility.Collapsed : Visibility.Visible;
             }
             else
@@ -67,14 +75,18 @@ namespace Speed_Test
 
                 if (lastResult != null)
                 {
-                    DownloadText.Text = $"{lastResult.DownloadMbps:F1} Mbps";
-                    UploadText.Text = $"{lastResult.UploadMbps:F1} Mbps";
+                    DownloadText.Text = $"{lastResult.DownloadMbps:F2} Mbps";
+                    UploadText.Text = $"{lastResult.UploadMbps:F2} Mbps";
+                    DownloadPingText.Text = $"{lastResult.DownloadPingMs:F0} ms";
+                    UploadPingText.Text = $"{lastResult.UploadPingMs:F0} ms";
                     UpdateTimeSince(lastResult.Timestamp);
                 }
                 else
                 {
                     DownloadText.Text = "-- Mbps";
                     UploadText.Text = "-- Mbps";
+                    DownloadPingText.Text = "-- ms";
+                    UploadPingText.Text = "-- ms";
                     TimeSinceText.Text = "No tests yet";
                 }
             }
@@ -84,7 +96,7 @@ namespace Speed_Test
         {
             _timer = new DispatcherTimer
             {
-                Interval = TimeSpan.FromSeconds(10) // Update every 10 seconds
+                Interval = TimeSpan.FromSeconds(10)
             };
             _timer.Tick += (s, e) =>
             {
@@ -128,36 +140,41 @@ namespace Speed_Test
         {
             _timer?.Stop();
             base.OnClosed(e);
+            // Clean up JSON logger
+            // JsonMessageLogger.Close();
         }
 
         private async void StartTestButton_Click(object sender, RoutedEventArgs e)
         {
             StartTestButton.IsEnabled = false;
+            contextruntest.IsEnabled = false;
             StartTestButton.Content = "Testing...";
 
             DownloadText.Text = "…";
             UploadText.Text = "…";
+            DownloadPingText.Text = "…";
+            UploadPingText.Text = "…";
             TimeSinceText.Text = "Running test...";
             TamperWarning.Visibility = Visibility.Collapsed;
 
             try
             {
-                var (downloadMbps, uploadMbps, hostname, city, country) =
-                    await Ndt7Client.RunTestAsync(
-                        _downloadProgress,
-                        _uploadProgress,
-                        UpdateDebugText);
+                var result = await Ndt7Client.RunTestAsync(UpdateProgress);
 
-                // Update display
-                DownloadText.Text = $"{downloadMbps:F1} Mbps";
-                UploadText.Text = $"{uploadMbps:F1} Mbps";
+                DownloadText.Text = $"{result.DownloadMbps:F2} Mbps";
+                UploadText.Text = $"{result.UploadMbps:F2} Mbps";
+                DownloadPingText.Text = $"{result.DownloadPingMs:F0} ms";
+                UploadPingText.Text = $"{result.UploadPingMs:F0} ms";
                 TimeSinceText.Text = "Last: Just now";
 
-                // Save to secure storage with tamper protection
-                _secureStorage.SaveResult(downloadMbps, uploadMbps, hostname, city, country);
+                _secureStorage.SaveResult(result.DownloadMbps, result.UploadMbps,
+                    result.DownloadPingMs, result.UploadPingMs,
+                    result.Hostname, result.City, result.Country,
+                SecureStorage.GetOptions());
 
-                // Also save to database for backward compatibility
-                DatabaseHelper.SaveResult(hostname, city, country, downloadMbps, uploadMbps);
+                DatabaseHelper.SaveResult(result.DownloadMbps, result.UploadMbps,
+                    result.DownloadPingMs, result.UploadPingMs,
+                    result.Hostname, result.City, result.Country);
             }
             catch (System.Net.Http.HttpRequestException ex)
             {
@@ -182,6 +199,7 @@ namespace Speed_Test
             finally
             {
                 StartTestButton.IsEnabled = true;
+                contextruntest.IsEnabled = true;
                 StartTestButton.Content = "Run Test";
             }
         }
@@ -194,12 +212,32 @@ namespace Speed_Test
             }
         }
 
+        private void UpdateProgress(string phase, double progress, double? downloadMbps = null,
+            double? uploadMbps = null, double? downloadPing = null, double? uploadPing = null)
+        {
+            Dispatcher.Invoke(() =>
+            {
+                if (progress > 0)
+                    TimeSinceText.Text = $"{phase} {progress:F0}%";
+                else
+                    TimeSinceText.Text = $"{phase}";
+
+                if (downloadMbps.HasValue)
+                    DownloadText.Text = $"{downloadMbps.Value:F2} Mbps";
+                if (uploadMbps.HasValue)
+                    UploadText.Text = $"{uploadMbps.Value:F2} Mbps";
+                if (downloadPing.HasValue)
+                    DownloadPingText.Text = $"{downloadPing.Value:F0} ms";
+                if (uploadPing.HasValue)
+                    UploadPingText.Text = $"{uploadPing.Value:F0} ms";
+            });
+        }
+
         private void HandleTestError(string title, string message, Exception ex)
         {
             DownloadText.Text = "Error";
             UploadText.Text = "Error";
 
-            // Update time since with last successful test
             var secureResult = _secureStorage.LoadResult();
             if (secureResult != null)
             {
@@ -216,27 +254,6 @@ namespace Speed_Test
                 MessageBoxImage.Warning);
         }
 
-        private void UpdateDebugText(string msg)
-        {
-            // Extract speed values from debug messages for real-time updates
-            if (msg.StartsWith("Download:"))
-            {
-                var parts = msg.Split([' '], StringSplitOptions.RemoveEmptyEntries);
-                if (parts.Length >= 2)
-                {
-                    DownloadText.Text = $"{parts[1]} Mbps";
-                }
-            }
-            else if (msg.StartsWith("Upload:"))
-            {
-                var parts = msg.Split([' '], StringSplitOptions.RemoveEmptyEntries);
-                if (parts.Length >= 2)
-                {
-                    UploadText.Text = $"{parts[1]} Mbps";
-                }
-            }
-        }
-
         private void CloseButton_Click(object sender, RoutedEventArgs e)
         {
             this.Close();
@@ -244,11 +261,10 @@ namespace Speed_Test
 
         private void ShowAppInfo()
         {
-            var version = System.Reflection.Assembly.GetExecutingAssembly().GetName().Version?.ToString() ?? "1.0.0";
+            var version = Assembly.GetExecutingAssembly().GetName().Version?.ToString() ?? "1.0.0";
             AppVersionLink.Inlines.Clear();
             AppVersionLink.Inlines.Add($"v{version}");
         }
-
 
         private void Hyperlink_RequestNavigate(object sender, RequestNavigateEventArgs e)
         {
@@ -269,68 +285,153 @@ namespace Speed_Test
 
         #region Skin Management
 
-        private void ApplySkin(string skinName)
+        public void RefreshSkins()
+        {
+            _availableSkins = SkinManager.DiscoverSkins();
+            RebuildSkinMenu();
+        }
+
+        private void RebuildSkinMenu()
+        {
+            if (this.contextMenu == null)
+                return;
+
+            var skinMenuItem = this.contextMenu.Items.OfType<MenuItem>()
+                .FirstOrDefault(m => m.Header?.ToString() == "Skin");
+
+            if (skinMenuItem == null)
+                return;
+
+            skinMenuItem.Items.Clear();
+
+            var currentSkin = LoadSavedSkin();
+
+            // Add skin menu items
+            foreach (var skin in _availableSkins)
+            {
+                var displayName = skin.IsCustom ? $"{skin.Name} ⭐" : skin.Name;
+                var item = new MenuItem
+                {
+                    Header = displayName,
+                    Tag = skin.Name,
+                    IsCheckable = true,
+                    IsChecked = skin.Name.Equals(currentSkin, StringComparison.OrdinalIgnoreCase)
+                };
+
+                item.Click += (s, e) =>
+                {
+                    ApplySkin(skin.Name);
+
+                    foreach (var menuItem in skinMenuItem.Items.OfType<MenuItem>())
+                    {
+                        if (menuItem.Tag is string tag)
+                        {
+                            menuItem.IsChecked = tag.Equals(skin.Name, StringComparison.OrdinalIgnoreCase);
+                        }
+                    }
+                };
+
+                skinMenuItem.Items.Add(item);
+            }
+
+            skinMenuItem.Items.Add(new Separator());
+
+            var refreshItem = new MenuItem { Header = "🔄 Refresh Skins" };
+            refreshItem.Click += (s, e) => RefreshSkins();
+            skinMenuItem.Items.Add(refreshItem);
+
+            var openFolderItem = new MenuItem { Header = "📂 Open Skins Folder" };
+            openFolderItem.Click += OpenSkinsFolder_Click;
+            skinMenuItem.Items.Add(openFolderItem);
+        }
+
+        public void ApplySkin(string skinName)
         {
             try
             {
-                var skinDict = new ResourceDictionary
+                if (SkinManager.LoadSkin(skinName))
                 {
-                    Source = new Uri($"Skins/{skinName}Skin.xaml", UriKind.Relative)
-                };
+                    if (this.contextMenu?.Items.OfType<MenuItem>()
+                        .FirstOrDefault(m => m.Header?.ToString() == "Skin") is MenuItem skinMenuItem)
+                    {
+                        foreach (var item in skinMenuItem.Items.OfType<MenuItem>().Where(m => m.Tag is string))
+                        {
+                            item.IsChecked = item.Tag.ToString()!.Equals(skinName, StringComparison.OrdinalIgnoreCase);
+                        }
+                    }
 
-                Application.Current.Resources.MergedDictionaries.Clear();
-                Application.Current.Resources.MergedDictionaries.Add(skinDict);
-
-                // Update menu checks
-                DefaultSkinMenuItem.IsChecked = skinName == "Default";
-                DarkSkinMenuItem.IsChecked = skinName == "Dark";
-                LightSkinMenuItem.IsChecked = skinName == "Light";
-                NeonSkinMenuItem.IsChecked = skinName == "Neon";
-
-                // Save preference
-                SaveSkinPreference(skinName);
+                    SaveSkinPreference(skinName);
+                }
+                else
+                {
+                    MessageBox.Show($"Failed to load skin: {skinName}", "Skin Error",
+                        MessageBoxButton.OK, MessageBoxImage.Warning);
+                }
             }
             catch (Exception ex)
             {
-                MessageBox.Show($"Failed to load skin: {ex.Message}", "Skin Error", MessageBoxButton.OK, MessageBoxImage.Warning);
+                MessageBox.Show($"Failed to load skin: {ex.Message}", "Skin Error",
+                    MessageBoxButton.OK, MessageBoxImage.Warning);
             }
         }
 
-        private void DefaultSkin_Click(object sender, RoutedEventArgs e) => ApplySkin("Default");
-        private void DarkSkin_Click(object sender, RoutedEventArgs e) => ApplySkin("Dark");
-        private void LightSkin_Click(object sender, RoutedEventArgs e) => ApplySkin("Light");
-        private void NeonSkin_Click(object sender, RoutedEventArgs e) => ApplySkin("Neon");
-
-        private void SaveSkinPreference(string skinName)
+        private static void SaveSkinPreference(string skinName)
         {
             try
             {
                 var appData = Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData);
-                var prefFile = System.IO.Path.Combine(appData, "SpeedTest", "skin_preference.txt");
-                System.IO.File.WriteAllText(prefFile, skinName);
+                var prefFile = Path.Combine(appData, "SpeedTest", "skin_preference.txt");
+                Directory.CreateDirectory(Path.GetDirectoryName(prefFile)!);
+                File.WriteAllText(prefFile, skinName);
             }
-            catch { /* Ignore save errors */ }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"Save failed: {ex.Message}");
+            }
         }
 
-        private string LoadSavedSkin()
+        private static string LoadSavedSkin()
         {
             try
             {
                 var appData = Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData);
-                var prefFile = System.IO.Path.Combine(appData, "SpeedTest", "skin_preference.txt");
-                if (System.IO.File.Exists(prefFile))
+                var prefFile = Path.Combine(appData, "SpeedTest", "skin_preference.txt");
+                if (File.Exists(prefFile))
                 {
-                    return System.IO.File.ReadAllText(prefFile).Trim();
+                    var skin = File.ReadAllText(prefFile).Trim();
+                    return skin;
                 }
             }
-            catch { /* Ignore load errors */ }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"Load failed: {ex.Message}");
+            }
 
             return "Default";
         }
 
+        private void OpenSkinsFolder_Click(object sender, RoutedEventArgs e)
+        {
+            try
+            {
+                SkinManager.EnsureCustomSkinsFolder();
+                var folder = SkinManager.GetCustomSkinsFolder();
+                Process.Start(new ProcessStartInfo
+                {
+                    FileName = folder,
+                    UseShellExecute = true,
+                    Verb = "open"
+                });
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"Unable to open skins folder: {ex.Message}", "Error",
+                    MessageBoxButton.OK, MessageBoxImage.Error);
+            }
+        }
         #endregion
 
-        private void ClearData_Click(object sender, RoutedEventArgs e)
+        public void ClearData_Click(object sender, RoutedEventArgs e)
         {
             var result = MessageBox.Show(
                 "Clear all saved speed test data?\n\nThis will remove:\n• Last secure result\n• All test history from database",
@@ -347,14 +448,18 @@ namespace Speed_Test
 
                     DownloadText.Text = "-- Mbps";
                     UploadText.Text = "-- Mbps";
+                    DownloadPingText.Text = "-- ms";
+                    UploadPingText.Text = "-- ms";
                     TimeSinceText.Text = "No tests yet";
                     TamperWarning.Visibility = Visibility.Collapsed;
 
-                    MessageBox.Show("All data cleared successfully!", "Success", MessageBoxButton.OK, MessageBoxImage.Information);
+                    MessageBox.Show("All data cleared successfully!", "Success",
+                        MessageBoxButton.OK, MessageBoxImage.Information);
                 }
                 catch (Exception ex)
                 {
-                    MessageBox.Show($"Failed to clear data: {ex.Message}", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
+                    MessageBox.Show($"Failed to clear data: {ex.Message}", "Error",
+                        MessageBoxButton.OK, MessageBoxImage.Error);
                 }
             }
         }

@@ -1,0 +1,14 @@
+﻿<ResourceDictionary xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+                    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+
+    <!-- Ocean Theme - Deep Sea Blue -->
+    <SolidColorBrush x:Key="WidgetBackground" Color="#0A1628"/>
+    <SolidColorBrush x:Key="WidgetBorder" Color="#00CED1"/>
+    <SolidColorBrush x:Key="TitleBrush" Color="#E0F7FA"/>
+    <SolidColorBrush x:Key="ValueBrush" Color="#B2EBF2"/>
+    <SolidColorBrush x:Key="SubtextBrush" Color="#4DD0E1"/>
+    <SolidColorBrush x:Key="DownloadBrush" Color="#26C6DA"/>
+    <SolidColorBrush x:Key="UploadBrush" Color="#00ACC1"/>
+    <SolidColorBrush x:Key="PingBrush" Color="#00E5FF"/>
+
+</ResourceDictionary>

@@ -1,10 +1,14 @@
 ﻿<ResourceDictionary xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
                     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
-	<SolidColorBrush x:Key="WidgetBackground" Color="#FFFFFF"/>
-	<SolidColorBrush x:Key="WidgetBorder" Color="#CCCCCC"/>
-	<SolidColorBrush x:Key="TitleBrush" Color="#333333"/>
-	<SolidColorBrush x:Key="ValueBrush" Color="#000000"/>
-	<SolidColorBrush x:Key="SubtextBrush" Color="#666666"/>
-	<SolidColorBrush x:Key="DownloadBrush" Color="#2E7D32"/>
-	<SolidColorBrush x:Key="UploadBrush" Color="#1976D2"/>
+
+    <!-- Light Theme - Clean White -->
+    <SolidColorBrush x:Key="WidgetBackground" Color="#FFFFFF"/>
+    <SolidColorBrush x:Key="WidgetBorder" Color="#CCCCCC"/>
+    <SolidColorBrush x:Key="TitleBrush" Color="#333333"/>
+    <SolidColorBrush x:Key="ValueBrush" Color="#000000"/>
+    <SolidColorBrush x:Key="SubtextBrush" Color="#666666"/>
+    <SolidColorBrush x:Key="DownloadBrush" Color="#2E7D32"/>
+    <SolidColorBrush x:Key="UploadBrush" Color="#1976D2"/>
+    <SolidColorBrush x:Key="PingBrush" Color="#F57C00"/>
+
 </ResourceDictionary>

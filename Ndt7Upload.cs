@@ -2,8 +2,6 @@
 using System.Net.WebSockets;
 using System.Text;
 using System.Text.Json;
-using System.Windows;
-using System.Windows.Controls;
 
 namespace SpeedTestWidget
 {
@@ -13,15 +11,15 @@ namespace SpeedTestWidget
         private const int ConnectionTimeoutSeconds = 15;
         private const int BufferSize = 8192;
 
-        public static async Task<double> RunWebSocketUpload(
+        public static async Task<(double speed, double ping)> RunWebSocketUpload(
             string url,
-            ProgressBar progressBar,
-            Action<string> updateDebugText)
+            Action<double, double, double> progressCallback)
         {
             using var cts = new CancellationTokenSource(TimeSpan.FromSeconds(TestDurationSeconds + ConnectionTimeoutSeconds));
             var token = cts.Token;
 
             double finalSpeed = 0;
+            double pingMs = 0;
             var stopwatch = Stopwatch.StartNew();
 
             var sendBuffer = new byte[BufferSize];
@@ -37,59 +35,27 @@ namespace SpeedTestWidget
                 ws.Options.SetRequestHeader("User-Agent", "ndt7-client-dotnet/1.0");
                 ws.Options.KeepAliveInterval = TimeSpan.FromSeconds(30);
 
-                // Connection phase with timeout
-                updateDebugText("Connecting to upload server...");
-
-                try
-                {
-                    using var connectCts = CancellationTokenSource.CreateLinkedTokenSource(token);
-                    connectCts.CancelAfter(TimeSpan.FromSeconds(10));
-
-                    await ws.ConnectAsync(new Uri(url), connectCts.Token);
-                    updateDebugText("Upload test connected");
-                }
-                catch (OperationCanceledException)
-                {
-                    throw new TimeoutException("Connection to upload server timed out after 10 seconds.");
-                }
-                catch (WebSocketException ex) when (ex.WebSocketErrorCode == WebSocketError.ConnectionClosedPrematurely)
-                {
-                    throw new WebSocketException("Server closed connection during handshake. The server may be overloaded.");
-                }
+                using var connectCts = CancellationTokenSource.CreateLinkedTokenSource(token);
+                connectCts.CancelAfter(TimeSpan.FromSeconds(10));
+                await ws.ConnectAsync(new Uri(url), connectCts.Token);
 
                 // Send task: continuously send data
                 var sendTask = Task.Run(async () =>
                 {
-                    try
+                    while (ws.State == WebSocketState.Open &&
+                        !token.IsCancellationRequested &&
+                        stopwatch.Elapsed.TotalSeconds < TestDurationSeconds)
                     {
-                        while (ws.State == WebSocketState.Open &&
-                               !token.IsCancellationRequested &&
-                               stopwatch.Elapsed.TotalSeconds < TestDurationSeconds)
+                        try
                         {
-                            try
-                            {
-                                await ws.SendAsync(
-                                    new ArraySegment<byte>(sendBuffer),
-                                    WebSocketMessageType.Binary,
-                                    endOfMessage: true,
-                                    token);
-                            }
-                            catch (WebSocketException ex) when (ex.WebSocketErrorCode == WebSocketError.ConnectionClosedPrematurely)
-                            {
-                                Application.Current.Dispatcher.Invoke(() =>
-                                    updateDebugText("Upload connection closed by server"));
-                                break;
-                            }
-                            catch (OperationCanceledException)
-                            {
-                                break;
-                            }
+                            await ws.SendAsync(
+                                new ArraySegment<byte>(sendBuffer),
+                                WebSocketMessageType.Binary,
+                                endOfMessage: true,
+                                token);
                         }
-                    }
-                    catch (Exception ex)
-                    {
-                        Debug.WriteLine($"Send task error: {ex.Message}");
-                        throw;
+                        catch (OperationCanceledException) { break; }
+                        catch (WebSocketException) { break; }
                     }
                 }, token);
 
@@ -98,33 +64,16 @@ namespace SpeedTestWidget
                 {
                     double localFinalSpeed = 0;
 
-                    try
+                    while (ws.State == WebSocketState.Open && !token.IsCancellationRequested)
                     {
-                        while (ws.State == WebSocketState.Open && !token.IsCancellationRequested)
-                        {
-                            WebSocketReceiveResult result;
+                        WebSocketReceiveResult result;
 
-                            try
-                            {
-                                result = await ws.ReceiveAsync(new ArraySegment<byte>(receiveBuffer), token);
-                            }
-                            catch (WebSocketException ex) when (ex.WebSocketErrorCode == WebSocketError.ConnectionClosedPrematurely)
-                            {
-                                Application.Current.Dispatcher.Invoke(() =>
-                                    updateDebugText("Server closed connection unexpectedly"));
-                                break;
-                            }
-                            catch (OperationCanceledException)
-                            {
-                                break;
-                            }
+                        try
+                        {
+                            result = await ws.ReceiveAsync(new ArraySegment<byte>(receiveBuffer), token);
 
                             if (result.MessageType == WebSocketMessageType.Close)
-                            {
-                                Application.Current.Dispatcher.Invoke(() =>
-                                    updateDebugText("Server closed connection normally"));
                                 break;
-                            }
 
                             if (result.MessageType == WebSocketMessageType.Text)
                             {
@@ -132,9 +81,19 @@ namespace SpeedTestWidget
 
                                 try
                                 {
-                                    JsonMessageLogger.LogUploadMessage(message);
+                                    // Optional: Log raw JSON messages for debugging
+                                    // JsonMessageLogger.LogUploadMessage(message);
                                     using var doc = JsonDocument.Parse(message);
                                     var root = doc.RootElement;
+
+                                    // Extract ping/MinRTT from BBRInfo
+                                    if (root.TryGetProperty("BBRInfo", out var bbrInfo))
+                                    {
+                                        if (bbrInfo.TryGetProperty("MinRTT", out var rtt))
+                                        {
+                                            pingMs = rtt.GetInt64() / 1000.0; // Convert microseconds to milliseconds
+                                        }
+                                    }
 
                                     // Primary: AppInfo with NumBytes
                                     if (root.TryGetProperty("AppInfo", out var appInfo))
@@ -148,18 +107,13 @@ namespace SpeedTestWidget
                                             if (elapsedMicroseconds > 0)
                                             {
                                                 localFinalSpeed = (bytes * 8.0 / 1_000_000.0) / (elapsedMicroseconds / 1_000_000.0);
-
                                                 double elapsedSeconds = stopwatch.Elapsed.TotalSeconds;
                                                 double progress = Math.Min(100, (elapsedSeconds / TestDurationSeconds) * 100);
-
-                                                Application.Current.Dispatcher.Invoke(() =>
-                                                {
-                                                    progressBar.Value = progress;
-                                                    updateDebugText($"Upload: {localFinalSpeed:F2} Mbps ({bytes:N0} bytes)");
-                                                });
+                                                progressCallback(progress, localFinalSpeed, pingMs);
                                             }
                                         }
                                     }
+
                                     // Fallback: TCPInfo
                                     else
                                     {
@@ -184,33 +138,19 @@ namespace SpeedTestWidget
                                             if (elapsedMicroseconds > 0)
                                             {
                                                 localFinalSpeed = (bytes * 8.0 / 1_000_000.0) / (elapsedMicroseconds / 1_000_000.0);
-
                                                 double elapsedSeconds = stopwatch.Elapsed.TotalSeconds;
                                                 double progress = Math.Min(100, (elapsedSeconds / TestDurationSeconds) * 100);
-
-                                                Application.Current.Dispatcher.Invoke(() =>
-                                                {
-                                                    progressBar.Value = progress;
-                                                    updateDebugText($"Upload: {localFinalSpeed:F2} Mbps (TCP)");
-                                                });
+                                                progressCallback(progress, localFinalSpeed, pingMs);
                                             }
                                         }
                                     }
                                 }
-                                catch (JsonException ex)
-                                {
-                                    Application.Current.Dispatcher.Invoke(() =>
-                                        updateDebugText($"JSON parse warning: {ex.Message}"));
-                                }
+                                catch (JsonException) { /* Ignore parse errors */ }
                             }
                         }
+                        catch (OperationCanceledException) { break; }
+                        catch (WebSocketException) { break; }
                     }
-                    catch (Exception ex)
-                    {
-                        Debug.WriteLine($"Receive task error: {ex.Message}");
-                        throw;
-                    }
-
                     return localFinalSpeed;
                 }, token);
 
@@ -218,32 +158,8 @@ namespace SpeedTestWidget
                 await Task.WhenAll(sendTask, receiveTask);
                 finalSpeed = await receiveTask;
 
-                Application.Current.Dispatcher.Invoke(() => progressBar.Value = 100);
-
                 if (finalSpeed == 0)
-                {
                     throw new InvalidOperationException("No valid speed measurements received from server.");
-                }
-            }
-            catch (OperationCanceledException)
-            {
-                if (finalSpeed == 0)
-                {
-                    throw new TimeoutException("Upload test timed out with no measurements.");
-                }
-                updateDebugText($"Upload test timed out (got {finalSpeed:F2} Mbps before timeout)");
-            }
-            catch (WebSocketException ex)
-            {
-                Application.Current.Dispatcher.Invoke(() =>
-                    updateDebugText($"WebSocket error: {ex.Message}"));
-                throw;
-            }
-            catch (Exception ex)
-            {
-                Application.Current.Dispatcher.Invoke(() =>
-                    updateDebugText($"Upload error: {ex.Message}"));
-                throw;
             }
             finally
             {
@@ -251,20 +167,15 @@ namespace SpeedTestWidget
                 {
                     try
                     {
-                        await ws.CloseAsync(WebSocketCloseStatus.NormalClosure, "Test complete", CancellationToken.None);
+                        await ws.CloseAsync(WebSocketCloseStatus.NormalClosure, "Complete", CancellationToken.None);
                     }
-                    catch (Exception ex)
-                    {
-                        Debug.WriteLine($"Error closing WebSocket: {ex.Message}");
-                    }
+                    catch { /* Ignore close errors */ }
                 }
 
                 stopwatch.Stop();
-                Application.Current.Dispatcher.Invoke(() =>
-                    updateDebugText($"Upload test finished: {finalSpeed:F2} Mbps"));
             }
 
-            return finalSpeed;
+            return (finalSpeed, pingMs);
         }
     }
 }

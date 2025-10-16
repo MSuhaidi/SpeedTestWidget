@@ -3,7 +3,7 @@ using System.Security.Cryptography;
 using System.Text;
 using System.Text.Json;
 
-namespace Speed_Test
+namespace SpeedTestWidget
 {
     /// <summary>
     /// Secure storage with tamper detection for last speed test result
@@ -36,15 +36,26 @@ namespace Speed_Test
             }
         }
 
+        public static JsonSerializerOptions GetOptions()
+        {
+            return new JsonSerializerOptions
+            {
+                WriteIndented = true
+            };
+        }
+
         /// <summary>
         /// Save speed test result with tamper protection signature
         /// </summary>
-        public void SaveResult(double downloadMbps, double uploadMbps, string server, string city, string country)
+        public void SaveResult(double downloadMbps, double uploadMbps, double downloadPingMs, double uploadPingMs,
+            string server, string city, string country, JsonSerializerOptions options)
         {
             var result = new SecureTestResult
             {
                 DownloadMbps = downloadMbps,
                 UploadMbps = uploadMbps,
+                DownloadPingMs = downloadPingMs,
+                UploadPingMs = uploadPingMs,
                 Server = server,
                 City = city,
                 Country = country,
@@ -54,10 +65,7 @@ namespace Speed_Test
             // Generate signature
             result.Signature = GenerateSignature(result);
 
-            var json = JsonSerializer.Serialize(result, new JsonSerializerOptions
-            {
-                WriteIndented = true
-            });
+            var json = JsonSerializer.Serialize(result, options);
 
             File.WriteAllText(_dataFile, json);
         }
@@ -109,9 +117,7 @@ namespace Speed_Test
             // Create signature from all critical data + secret key
             var data = $"{result.DownloadMbps:F10}|{result.UploadMbps:F10}|" +
                       $"{result.Timestamp:O}|{result.Server}|{result.City}|{result.Country}|{_secretKey}";
-
-            using var sha256 = SHA256.Create();
-            var hashBytes = sha256.ComputeHash(Encoding.UTF8.GetBytes(data));
+            var hashBytes = SHA256.HashData(Encoding.UTF8.GetBytes(data));
             return Convert.ToBase64String(hashBytes);
         }
     }
@@ -123,6 +129,8 @@ namespace Speed_Test
     {
         public double DownloadMbps { get; set; }
         public double UploadMbps { get; set; }
+        public double DownloadPingMs { get; set; }
+        public double UploadPingMs { get; set; }
         public DateTime Timestamp { get; set; }
         public string Server { get; set; } = string.Empty;
         public string City { get; set; } = string.Empty;
