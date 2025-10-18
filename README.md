@@ -1,7 +1,10 @@
 # SpeedTestWidget  
 
-[![GitHub Sponsors](https://img.shields.io/github/sponsors/MSuhaidi?style=flat-square&logo=githubsponsors&color=ff69b4)](https://github.com/sponsors/MSuhaidi)
-[![Donate via PayPal](https://img.shields.io/badge/Donate-PayPal-blue?style=flat-square&logo=paypal)](https://paypal.me/MSuhaidiM)  
+[![GitHub Sponsors](https://img.shields.io/github/sponsors/MSuhaidi?style=plastic&logo=githubsponsors&color=EA4AAA&logoSize=auto&label=Sponsor%20Me)](https://github.com/sponsors/MSuhaidi)
+[![Donate via PayPal](https://img.shields.io/badge/Support_Me-PayPal-002991?style=plastic&logo=paypal&logoSize=auto)](https://paypal.me/MSuhaidiM)
+![GitHub top language](https://img.shields.io/github/languages/top/MSuhaidi/SpeedTestWidget?style=plastic)
+[![GitHub contributors](https://img.shields.io/github/contributors/Msuhaidi/SpeedTestWidget?style=social&logo=refinedgithub&color=9E95B7)](https://github.com/MSuhaidi/SpeedTestWidget)
+
 
 A lightweight desktop widget that runs speed tests (download/upload) using the **ndt7** protocol.  
 
